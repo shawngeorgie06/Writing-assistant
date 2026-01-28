@@ -149,6 +149,14 @@ st.markdown("""
         letter-spacing: -0.01em;
     }
 
+    /* === Sidebar toggle arrow === */
+    [data-testid="collapsedControl"] svg,
+    [data-testid="stSidebarCollapseButton"] svg,
+    button[kind="header"] svg {
+        color: var(--ink) !important;
+        fill: var(--ink) !important;
+    }
+
     /* === Hide Streamlit chrome === */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
