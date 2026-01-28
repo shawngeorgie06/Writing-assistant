@@ -69,7 +69,7 @@ st.markdown("""
         font-family: var(--serif) !important;
         color: var(--ink) !important;
     }
-    p, li, label, .stMarkdown, span, div {
+    p, li, label, .stMarkdown {
         font-family: var(--body) !important;
         color: var(--ink-light) !important;
     }
