@@ -149,12 +149,29 @@ st.markdown("""
         letter-spacing: -0.01em;
     }
 
-    /* === Sidebar toggle arrow === */
-    [data-testid="collapsedControl"] svg,
-    [data-testid="stSidebarCollapseButton"] svg,
-    button[kind="header"] svg {
-        color: var(--ink) !important;
-        fill: var(--ink) !important;
+    /* === Sidebar toggle arrow — force dark on all states === */
+    [data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] *,
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] *,
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapseButton"] *,
+    .st-emotion-cache-1dp5vir,
+    .st-emotion-cache-1dp5vir *,
+    button[kind="header"],
+    button[kind="header"] * {
+        color: #1a1a1a !important;
+        fill: #1a1a1a !important;
+        stroke: #1a1a1a !important;
+    }
+    /* Also target the sidebar close button inside the sidebar */
+    [data-testid="stSidebar"] button[kind="header"],
+    [data-testid="stSidebar"] button[kind="header"] *,
+    [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] * {
+        color: #1a1a1a !important;
+        fill: #1a1a1a !important;
+        stroke: #1a1a1a !important;
     }
 
     /* === Hide Streamlit chrome === */
