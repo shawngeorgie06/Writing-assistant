@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #ffffff;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --text-tertiary: #80868b;
+            --border-color: #e0e0e0;
+            --panel-bg: #ffffff;
+            --editor-bg: #ffffff;
+            --editor-text: #202124;
+            --input-bg: #ffffff;
+            --input-text: #202124;
+            --input-border: #dadce0;
+            --button-bg: #f1f3f4;
+            --button-hover: #e8f1fe;
+            --button-text: #5f6368;
+            --overlay-bg: rgba(0,0,0,0.5);
+            --accent-color: #1f71d9;
+            --error-color: #d33b27;
+            --gray-text: #666666;
+        }
+
+        body.dark-mode {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #262626;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --text-tertiary: #9e9e9e;
+            --border-color: #313131;
+            --panel-bg: #1e1e1e;
+            --editor-bg: #121212;
+            --editor-text: #ffffff;
+            --input-bg: #262626;
+            --input-text: #ffffff;
+            --input-border: #404040;
+            --button-bg: #2a2a2a;
+            --button-hover: #3a3a3a;
+            --button-text: #b3b3b3;
+            --overlay-bg: rgba(0,0,0,0.8);
+            --accent-color: #64b5f6;
+            --error-color: #ff6b6b;
+            --gray-text: #999999;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 100;
+            position: relative;
+        }
+
+        .sidebar.closed {
+            transform: translateX(-100%);
+            position: absolute;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--overlay-bg);
+            z-index: 99;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--input-bg);
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .new-doc-btn {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .new-doc-btn:hover {
+            background: #1565c0;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .docs-list {
+            margin-bottom: 24px;
+        }
+
+        .docs-list-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            padding: 0 8px;
+        }
+
+        .doc-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            border-radius: 6px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .doc-item:hover {
+            background: var(--button-bg);
+            border-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        .doc-item.active {
+            background: var(--button-hover);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .settings-section {
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+
+        .settings-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            padding: 12px;
+        }
+
+        #settingsContent {
+            padding: 0 12px 12px 12px;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        .form-input::placeholder,
+        .form-select::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(31, 113, 217, 0.1);
+        }
+
+        /* Main Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-btn {
+            padding: 6px 12px;
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .toolbar-btn:hover {
+            background: var(--button-bg);
+            border-color: var(--accent-color);
+        }
+
+        .toolbar-btn.active {
+            background: var(--button-hover);
+            border-color: var(--accent-color);
+            color: #1f71d9;
+        }
+
+        .save-indicator {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .save-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #80868b;
+        }
+
+        .save-dot.saving {
+            background: #ffa500;
+            animation: pulse 1s infinite;
+        }
+
+        .save-dot.saved {
+            background: #34a853;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .document-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 32px;
+            overflow-y: auto;
+            background: var(--bg-primary);
+        }
+
+        .doc-title {
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            padding: 8px;
+            border: 2px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .doc-title:hover {
+            background: var(--button-bg);
+        }
+
+        .doc-title.editing {
+            border-color: var(--accent-color);
+            background: var(--input-bg);
+        }
+
+        .editor {
+            flex: 1;
+            border: none;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--editor-text);
+            background: var(--editor-bg);
+            resize: none;
+            outline: none;
+            padding: 0;
+        }
+
+        .editor * {
+            color: var(--editor-text) !important;
+        }
+
+        /* Right Panel */
+        .panel {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .panel-content {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .stat-item {
+            background: var(--input-bg);
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--accent-color);
+        }
+
+        .export-btns {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-secondary);
+        }
+
+        .export-btn:hover {
+            background: var(--button-bg);
+            border-color: var(--accent-color);
+        }
+
+        .suggestions-list {
+            margin-top: 16px;
+        }
+
+        .suggestion-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        #settingsContent {
+            max-height: 500px;
+            opacity: 1;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        .suggestion-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--error-color);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-text {
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 1000px) {
+            .panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar.closed {
+                position: fixed;
+                left: 0;
+                height: 100%;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Documents</div>
+                <button class="new-doc-btn" onclick="newDocument()">
+                    <i class="fas fa-plus"></i> New Document
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="docs-list">
+                    <div class="docs-list-title">My Documents</div>
+                    <div id="docsList"></div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-title" onclick="toggleSettings()" style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none;">
+                        <span>Settings</span>
+                        <i class="fas fa-chevron-down" id="settingsToggleIcon" style="transition: transform 0.3s ease;"></i>
+                    </div>
+
+                    <div id="settingsContent">
+                    <div class="form-group">
+                        <label class="form-label">AI Provider</label>
+                        <div id="providerDisplay" style="padding: 10px; background: var(--input-bg); border-radius: 4px; border: 1px solid var(--input-border); color: var(--text-primary); font-size: 14px;">
+                            Loading...
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="endpointGroup" style="display:none;">
+                        <label class="form-label">Ollama Endpoint</label>
+                        <div id="endpointDisplay" style="padding: 10px; background: var(--input-bg); border-radius: 4px; border: 1px solid var(--input-border); color: var(--text-primary); font-size: 14px; word-break: break-all;">
+                            Loading...
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="apiKeyGroup" style="display:none;">
+                        <label class="form-label">API Key</label>
+                        <div style="padding: 10px; background: var(--input-bg); border-radius: 4px; border: 1px solid var(--input-border); color: var(--text-primary); font-size: 12px;">
+                            ✓ Configured in environment
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn-test" onclick="testConnection()" style="width: 100%; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer;">Test Connection</button>
+                    </div>
+
+                    <div id="connectionStatus" style="font-size: 12px; margin-top: 10px; padding: 8px; border-radius: 4px; display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Area -->
+        <div class="main-area">
+            <div class="toolbar">
+                <button class="toolbar-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <button class="toolbar-btn" id="boldBtn" onclick="formatText('bold')"><i class="fas fa-bold"></i></button>
+                <button class="toolbar-btn" id="italicBtn" onclick="formatText('italic')"><i class="fas fa-italic"></i></button>
+                <button class="toolbar-btn" id="underlineBtn" onclick="formatText('underline')"><i class="fas fa-underline"></i></button>
+                <button class="toolbar-btn" onclick="formatText('justifyLeft')"><i class="fas fa-align-left"></i></button>
+                <button class="toolbar-btn" onclick="formatText('justifyCenter')"><i class="fas fa-align-center"></i></button>
+                <button class="toolbar-btn" onclick="formatText('justifyRight')"><i class="fas fa-align-right"></i></button>
+                <button class="toolbar-btn" onclick="window.print()"><i class="fas fa-print"></i></button>
+                <button class="toolbar-btn" onclick="toggleDarkMode()" title="Toggle Dark Mode">
+                    <i class="fas fa-moon"></i>
+                </button>
+
+                <div class="save-indicator">
+                    <span id="saveText">Saved</span>
+                    <div class="save-dot saved" id="saveDot"></div>
+                </div>
+            </div>
+
+            <div class="document-area">
+                <div class="editor-column">
+                    <div class="doc-title" id="docTitle" onclick="editTitle()">Untitled Document</div>
+                    <div class="editor" id="editor" contenteditable="true" spellcheck="true" placeholder="Start typing..."></div>
+                </div>
+
+                <!-- Right Panel -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">Document Stats</div>
+                    </div>
+
+                    <div class="panel-content">
+                        <div class="stat-item">
+                            <div class="stat-label">Words</div>
+                            <div class="stat-value" id="wordCount">0</div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-label">Characters</div>
+                            <div class="stat-value" id="charCount">0</div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-label">Reading Time</div>
+                            <div class="stat-value" id="readingTime">0m</div>
+                        </div>
+
+                        <div class="export-btns">
+                            <button class="export-btn" onclick="exportPDF()">📄 PDF</button>
+                            <button class="export-btn" onclick="exportMarkdown()">📝 MD</button>
+                        </div>
+
+                        <div class="suggestions-list" id="suggestionsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDocId = null;
+        let editor = document.getElementById('editor');
+        let saveTimeout;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            loadDocuments();
+            editor.addEventListener('input', debounce(analyzeText, 1000));
+            editor.addEventListener('input', debounce(autoSave, 1500));
+            editor.addEventListener('input', updateStats);
+
+            // Handle pasted content - remove styling to ensure text color is correct
+            editor.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+        });
+
+        // Toggle Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('closed');
+            overlay.classList.toggle('show');
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('writingAssistantDarkMode', isDarkMode);
+        }
+
+        function initializeDarkMode() {
+            const isDarkMode = localStorage.getItem('writingAssistantDarkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        }
+
+        function toggleSettings() {
+            const settingsContent = document.getElementById('settingsContent');
+            const icon = document.getElementById('settingsToggleIcon');
+
+            const computed = window.getComputedStyle(settingsContent);
+
+            if (computed.maxHeight === '0px' || settingsContent.style.maxHeight === '') {
+                // Open
+                settingsContent.style.maxHeight = '500px';
+                settingsContent.style.opacity = '1';
+                settingsContent.style.pointerEvents = 'auto';
+                icon.style.transform = 'rotate(180deg)';
+                localStorage.setItem('settingsOpen', 'true');
+            } else {
+                // Close
+                settingsContent.style.maxHeight = '0px';
+                settingsContent.style.opacity = '0';
+                settingsContent.style.pointerEvents = 'none';
+                icon.style.transform = 'rotate(0deg)';
+                localStorage.setItem('settingsOpen', 'false');
+            }
+        }
+
+        function initializeSettings() {
+            const settingsContent = document.getElementById('settingsContent');
+            const icon = document.getElementById('settingsToggleIcon');
+            const isOpen = localStorage.getItem('settingsOpen') !== 'false';
+
+            if (isOpen) {
+                settingsContent.style.maxHeight = '500px';
+                settingsContent.style.opacity = '1';
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                settingsContent.style.maxHeight = '0px';
+                settingsContent.style.opacity = '0';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        document.getElementById('sidebarOverlay').addEventListener('click', toggleSidebar);
+        initializeDarkMode();
+
+        // Function to set up settings event listener
+        function setupSettingsListener() {
+            const settingsTitle = document.querySelector('.settings-title');
+            if (settingsTitle) {
+                settingsTitle.addEventListener('click', toggleSettings);
+            }
+        }
+
+        // Initialize settings after DOM is fully ready with longer delay
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                initializeSettings();
+                setupSettingsListener();
+            }, 100);
+        });
+
+        // Fallback if DOMContentLoaded already fired
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    initializeSettings();
+                    setupSettingsListener();
+                }, 100);
+            });
+        } else {
+            setTimeout(() => {
+                initializeSettings();
+                setupSettingsListener();
+            }, 100);
+        }
+
+        // Load Documents
+        async function loadDocuments() {
+            try {
+                const response = await fetch('/api/documents');
+                if (!response.ok) throw new Error('Failed to load');
+                const docs = await response.json();
+
+                const list = document.getElementById('docsList');
+                list.textContent = '';
+                docs.forEach(doc => {
+                    const item = document.createElement('div');
+                    item.className = 'doc-item' + (doc.id === currentDocId ? ' active' : '');
+                    item.textContent = doc.title;
+                    item.onclick = () => loadDocument(doc.id);
+                    list.appendChild(item);
+                });
+
+                if (docs.length > 0 && !currentDocId) {
+                    loadDocument(docs[0].id);
+                }
+            } catch (e) {
+                console.error('Error loading documents:', e);
+            }
+        }
+
+        // Load Document
+        async function loadDocument(id) {
+            try {
+                const response = await fetch(`/api/documents/${id}`);
+                if (!response.ok) throw new Error('Failed to load');
+                const doc = await response.json();
+
+                currentDocId = doc.id;
+                document.getElementById('docTitle').textContent = doc.title;
+                editor.textContent = doc.content;
+                updateStats();
+                analyzeText();
+
+                // Update active state for document items
+                document.querySelectorAll('.doc-item').forEach(item => {
+                    item.classList.remove('active');
+                    if (item.textContent === doc.title) {
+                        item.classList.add('active');
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading document:', e);
+            }
+        }
+
+        // New Document
+        async function newDocument() {
+            try {
+                const response = await fetch('/api/documents', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({title: 'Untitled Document'})
+                });
+                if (response.ok) {
+                    const doc = await response.json();
+                    loadDocument(doc.id);
+                    loadDocuments();
+                }
+            } catch (e) {
+                console.error('Error creating document:', e);
+            }
+        }
+
+        // Edit Title
+        function editTitle() {
+            const titleEl = document.getElementById('docTitle');
+            const currentText = titleEl.textContent;
+            titleEl.textContent = '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentText;
+            input.style.cssText = 'font-size: 32px; border: 2px solid var(--accent-color); padding: 8px; border-radius: 4px; width: 100%; font-weight: 500; font-family: inherit; color: var(--input-text); background: var(--input-bg);';
+            titleEl.appendChild(input);
+            input.focus();
+            input.select();
+
+            async function saveTitle() {
+                const newTitle = input.value.trim() || 'Untitled Document';
+
+                try {
+                    const response = await fetch(`/api/documents/${currentDocId}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({title: newTitle})
+                    });
+
+                    if (response.ok) {
+                        titleEl.textContent = newTitle;
+                        // Update document list to show new title
+                        loadDocuments();
+                    } else {
+                        titleEl.textContent = currentText;
+                    }
+                } catch (e) {
+                    console.error('Error saving title:', e);
+                    titleEl.textContent = currentText;
+                }
+            }
+
+            input.addEventListener('blur', saveTitle);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveTitle();
+                }
+                if (e.key === 'Escape') {
+                    titleEl.textContent = currentText;
+                }
+            });
+        }
+
+        // Auto Save
+        async function autoSave() {
+            if (!currentDocId) return;
+            showSaving();
+            try {
+                await fetch(`/api/documents/${currentDocId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({content: editor.textContent})
+                });
+                showSaved();
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+        }
+
+        function showSaving() {
+            document.getElementById('saveText').textContent = 'Saving...';
+            document.getElementById('saveDot').className = 'save-dot saving';
+        }
+
+        function showSaved() {
+            document.getElementById('saveText').textContent = 'Saved';
+            document.getElementById('saveDot').className = 'save-dot saved';
+        }
+
+        // Format Text
+        function formatText(command) {
+            document.execCommand(command, false, null);
+            updateFormatButtons();
+        }
+
+        function updateFormatButtons() {
+            document.getElementById('boldBtn').classList.toggle('active', document.queryCommandState('bold'));
+            document.getElementById('italicBtn').classList.toggle('active', document.queryCommandState('italic'));
+            document.getElementById('underlineBtn').classList.toggle('active', document.queryCommandState('underline'));
+        }
+
+        // Update Stats
+        function updateStats() {
+            const text = editor.textContent;
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            const readingTime = Math.ceil(words / 200);
+
+            document.getElementById('wordCount').textContent = words;
+            document.getElementById('charCount').textContent = chars;
+            document.getElementById('readingTime').textContent = readingTime + 'm';
+        }
+
+        // Analyze Text
+        async function analyzeText() {
+            const text = editor.textContent;
+            if (!text.trim()) {
+                document.getElementById('suggestionsList').textContent = '';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                const result = await response.json();
+
+                const list = document.getElementById('suggestionsList');
+                list.textContent = '';
+                if (result.issues && result.issues.length > 0) {
+                    result.issues.slice(0, 5).forEach(issue => {
+                        const card = document.createElement('div');
+                        card.className = 'suggestion-card';
+
+                        const category = document.createElement('div');
+                        category.className = 'suggestion-category';
+                        category.textContent = issue.category;
+
+                        const location = document.createElement('div');
+                        location.style.fontSize = '12px';
+                        location.style.color = '#ff9800';
+                        location.style.marginBottom = '5px';
+                        location.style.fontWeight = '600';
+                        location.textContent = 'Location: ' + (issue.location || 'Unknown');
+
+                        const problemText = document.createElement('div');
+                        problemText.style.fontSize = '12px';
+                        problemText.style.fontWeight = 'bold';
+                        problemText.style.color = '#ff5252';
+                        problemText.style.marginBottom = '8px';
+                        problemText.textContent = 'Problem: ' + (issue.problematic_text || issue.issue);
+
+                        const issue_desc = document.createElement('div');
+                        issue_desc.style.fontSize = '13px';
+                        issue_desc.style.fontWeight = '500';
+                        issue_desc.style.marginBottom = '8px';
+                        issue_desc.style.color = 'var(--text-primary)';
+                        issue_desc.textContent = issue.issue;
+
+                        const suggestion = document.createElement('div');
+                        suggestion.style.fontSize = '12px';
+                        suggestion.style.lineHeight = '1.6';
+                        suggestion.style.color = '#4caf50';
+                        suggestion.style.whiteSpace = 'pre-wrap';
+                        suggestion.style.wordWrap = 'break-word';
+                        suggestion.style.fontWeight = '500';
+                        suggestion.textContent = issue.suggestion || 'No suggestion available';
+
+                        card.appendChild(category);
+                        card.appendChild(location);
+                        card.appendChild(problemText);
+                        card.appendChild(issue_desc);
+                        card.appendChild(suggestion);
+                        list.appendChild(card);
+                    });
+                }
+            } catch (e) {
+                console.error('Analysis error:', e);
+            }
+        }
+
+        // Export
+        function exportPDF() {
+            window.print();
+        }
+
+        function exportMarkdown() {
+            const content = editor.textContent;
+            const title = document.getElementById('docTitle').textContent;
+            const markdown = `# ${title}\n\n${content}`;
+            const blob = new Blob([markdown], {type: 'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = title + '.md';
+            a.click();
+        }
+
+        // Settings
+        let currentSettings = {};
+
+        function updateProviderUI() {
+            const provider = currentSettings.ai_provider || 'local';
+            document.getElementById('endpointGroup').style.display = provider === 'ollama' ? 'block' : 'none';
+            document.getElementById('apiKeyGroup').style.display = ['gemini', 'openai'].includes(provider) ? 'block' : 'none';
+        }
+
+        async function saveSettings() {
+            // Settings are configured via environment variables
+            showStatus('Settings are configured via environment variables (.env)', 'info');
+        }
+
+        async function testConnection() {
+            const provider = currentSettings.ai_provider || 'local';
+            const apiKey = currentSettings.has_api_key ? '***' : '';
+            const endpoint = currentSettings.ai_endpoint || 'http://localhost:11434';
+            const statusEl = document.getElementById('connectionStatus');
+
+            if (provider === 'local') {
+                showStatus('Local mode - no connection needed', 'success');
+                return;
+            }
+
+            statusEl.style.display = 'block';
+            statusEl.textContent = 'Testing...';
+
+            try {
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        provider: provider,
+                        api_key: apiKey !== '***' ? apiKey : '',
+                        endpoint: endpoint
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    statusEl.style.background = '#efe';
+                    statusEl.style.color = '#3c3';
+                    statusEl.textContent = 'Connected! ' + data.message;
+                } else {
+                    statusEl.style.background = '#fee';
+                    statusEl.style.color = '#c33';
+                    statusEl.textContent = 'Error: ' + data.message;
+                }
+            } catch (e) {
+                statusEl.style.background = '#fee';
+                statusEl.style.color = '#c33';
+                statusEl.textContent = 'Connection failed: ' + e.message;
+            }
+        }
+
+        function showStatus(msg, type) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.style.display = 'block';
+            statusEl.textContent = msg;
+            statusEl.style.background = type === 'success' ? '#efe' : '#fee';
+            statusEl.style.color = type === 'success' ? '#3c3' : '#c33';
+            setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                if (response.ok) {
+                    currentSettings = await response.json();
+
+                    // Display settings as read-only
+                    const provider = currentSettings.ai_provider || 'local';
+                    document.getElementById('providerDisplay').textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
+
+                    if (currentSettings.ai_endpoint) {
+                        document.getElementById('endpointDisplay').textContent = currentSettings.ai_endpoint;
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading settings:', e);
+            }
+            updateProviderUI();
+        }
+
+        // Debounce
+        function debounce(fn, ms) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), ms);
+            };
+        }
+    </script>
+</body>
+</html>

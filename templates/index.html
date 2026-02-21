@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #ffffff;
+            color: #202124;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #e0e0e0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #e0e0e0;
+            background: #ffffff;
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-subtitle {
+            font-size: 0.75rem;
+            color: #80868b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 1.5rem 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #5f6368;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-select,
+        .form-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.85rem;
+            color: #202124;
+            background: white;
+        }
+
+        .form-select:focus,
+        .form-input:focus {
+            outline: none;
+            border-color: #1f71d9;
+            box-shadow: 0 0 0 2px rgba(31, 113, 217, 0.1);
+        }
+
+        .form-input[type="password"] {
+            font-family: 'Roboto', monospace;
+            letter-spacing: 0.1em;
+        }
+
+        .btn-test {
+            width: 100%;
+            padding: 0.5rem;
+            background: #e8f1fe;
+            border: 1px solid #1f71d9;
+            color: #1f71d9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-test:hover {
+            background: #d4e4f7;
+        }
+
+        .provider-note {
+            font-size: 0.75rem;
+            color: #80868b;
+            padding: 0.75rem;
+            background: #f1f3f4;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status-badge.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Toolbar */
+        .top-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            height: 56px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .top-toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .menu-button {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: #5f6368;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .menu-button:hover {
+            background: #f1f3f4;
+        }
+
+        .logo {
+            font-weight: 600;
+            color: #1f71d9;
+            margin-left: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .top-toolbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0 1rem;
+        }
+
+        .share-button {
+            background: #1f71d9;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .share-button:hover {
+            background: #1765cc;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Document Header */
+        .doc-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 1rem 2rem;
+        }
+
+        .doc-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 0.25rem;
+            cursor: pointer;
+        }
+
+        .doc-title:hover {
+            text-decoration: underline;
+        }
+
+        .doc-subtitle {
+            font-size: 0.85rem;
+            color: #80868b;
+        }
+
+        /* Formatting Toolbar */
+        .formatting-toolbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            border-right: 1px solid #dadce0;
+            padding-right: 1rem;
+        }
+
+        .toolbar-section:last-child {
+            border-right: none;
+        }
+
+        .toolbar-button {
+            background: none;
+            border: none;
+            padding: 0.4rem 0.6rem;
+            cursor: pointer;
+            color: #5f6368;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-button:hover {
+            background: #f1f3f4;
+        }
+
+        /* Editor Container */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .editor-column {
+            flex: 2.5;
+            padding: 2rem 3rem;
+            border-right: 1px solid #e0e0e0;
+            background: #ffffff;
+            overflow-y: auto;
+        }
+
+        .editor {
+            width: 100%;
+            min-height: 400px;
+            border: none;
+            font-family: 'Roboto', sans-serif;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #202124;
+            resize: none;
+            outline: none;
+            background: transparent;
+            padding: 0;
+        }
+
+        .editor::placeholder {
+            color: #bdc1c6;
+        }
+
+        .controls {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .controls label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #5f6368;
+        }
+
+        .btn-analyze {
+            background: #1f71d9;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-analyze:hover {
+            background: #1765cc;
+        }
+
+        /* Panel Column */
+        .panel-column {
+            flex: 1.2;
+            padding: 2rem;
+            background: #f8f9fa;
+            overflow-y: auto;
+            border-left: 1px solid #e0e0e0;
+        }
+
+        .panel-empty {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: #80868b;
+        }
+
+        .panel-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #202124;
+            margin-bottom: 1rem;
+        }
+
+        .divider {
+            height: 1px;
+            background: #e8eaed;
+            margin: 1.5rem 0;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            border: 1px solid #e8eaed;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #5f6368;
+        }
+
+        .score-value {
+            font-weight: 600;
+            color: #1f71d9;
+            font-size: 1rem;
+        }
+
+        .stat-line {
+            font-size: 0.85rem;
+            color: #5f6368;
+            padding: 0.5rem 0;
+        }
+
+        .issue-card {
+            background: white;
+            border: 1px solid #e8eaed;
+            border-radius: 4px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .issue-card:hover {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .issue-category {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #d33b27;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.4rem;
+        }
+
+        .issue-text {
+            font-size: 0.85rem;
+            color: #202124;
+            line-height: 1.4;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bdc1c6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">⚙️ Settings</div>
+            <div class="sidebar-subtitle">Configure AI</div>
+        </div>
+
+        <div class="sidebar-content">
+            <!-- AI Provider Selection -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">AI Platform</div>
+                <div class="form-group">
+                    <select id="provider" class="form-select" onchange="updateProviderInfo()">
+                        <option value="gemini">Google Gemini (Free tier)</option>
+                        <option value="openai">OpenAI (GPT-4)</option>
+                        <option value="anthropic">Anthropic Claude</option>
+                        <option value="ollama">Ollama (Local/Open Source)</option>
+                    </select>
+                </div>
+
+                <div id="provider-info" class="provider-note"></div>
+            </div>
+
+            <!-- API Key -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">API Configuration</div>
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <input type="password" id="apiKey" class="form-input" placeholder="Enter API key..." onchange="saveSettings()">
+                </div>
+                <button class="btn-test" onclick="testConnection()">
+                    <i class="fas fa-plug"></i> Test Connection
+                </button>
+                <div id="connection-status"></div>
+            </div>
+
+            <!-- AI Features -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Features</div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="realtime" checked>
+                        <span style="font-size: 0.9rem; color: #5f6368;">Real-time analysis</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="aiSuggestions" checked>
+                        <span style="font-size: 0.9rem; color: #5f6368;">AI suggestions</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">About</div>
+                <p style="font-size: 0.85rem; color: #80868b; line-height: 1.5;">
+                    Get free API keys from:
+                    <br><br>
+                    <strong>Gemini:</strong> ai.google.dev
+                    <br><strong>OpenAI:</strong> platform.openai.com
+                    <br><strong>Claude:</strong> console.anthropic.com
+                    <br><br>
+                    <strong>Ollama:</strong> Run locally for free (no API key needed)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Toolbar -->
+        <div class="top-toolbar">
+            <div class="top-toolbar-left">
+                <button class="menu-button" title="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">📝 Writing Assistant</div>
+            </div>
+            <div class="top-toolbar-right">
+                <button class="menu-button" title="Undo">
+                    <i class="fas fa-undo"></i>
+                </button>
+                <button class="menu-button" title="Redo">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="menu-button" title="Print">
+                    <i class="fas fa-print"></i>
+                </button>
+                <button class="share-button">
+                    <i class="fas fa-share"></i> Share
+                </button>
+            </div>
+        </div>
+
+        <!-- Document Header -->
+        <div class="doc-header">
+            <div class="doc-title">Untitled Document</div>
+            <div class="doc-subtitle">Saved in Cloud • Last edited now</div>
+        </div>
+
+        <!-- Formatting Toolbar -->
+        <div class="formatting-toolbar">
+            <div class="toolbar-section">
+                <button class="toolbar-button" title="Bold">
+                    <i class="fas fa-bold"></i>
+                </button>
+                <button class="toolbar-button" title="Italic">
+                    <i class="fas fa-italic"></i>
+                </button>
+                <button class="toolbar-button" title="Underline">
+                    <i class="fas fa-underline"></i>
+                </button>
+            </div>
+            <div class="toolbar-section">
+                <button class="toolbar-button" title="Align left">
+                    <i class="fas fa-align-left"></i>
+                </button>
+                <button class="toolbar-button" title="Align center">
+                    <i class="fas fa-align-center"></i>
+                </button>
+                <button class="toolbar-button" title="Align right">
+                    <i class="fas fa-align-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Editor & Panel -->
+        <div class="editor-container">
+            <!-- Editor Column -->
+            <div class="editor-column">
+                <textarea class="editor" id="editor" placeholder="Start typing..."></textarea>
+                <div class="controls">
+                    <label>
+                        <input type="checkbox" id="aiToggle" checked>
+                        AI Suggestions
+                    </label>
+                    <button class="btn-analyze" onclick="analyzeText()">📊 Analyze</button>
+                </div>
+            </div>
+
+            <!-- Panel Column -->
+            <div class="panel-column" id="panel">
+                <div class="panel-empty">
+                    <p>💡 Click "Analyze" to see insights</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PROVIDER_INFO = {
+            gemini: {
+                name: 'Google Gemini',
+                description: 'Free tier: 15 requests/min. Get key from ai.google.dev',
+                note: 'Fast and reliable. Best for quick analysis.'
+            },
+            openai: {
+                name: 'OpenAI GPT-4',
+                description: 'Paid API. Get key from platform.openai.com',
+                note: 'Most advanced model. Pay-per-use pricing.'
+            },
+            anthropic: {
+                name: 'Anthropic Claude',
+                description: 'Paid API. Get key from console.anthropic.com',
+                note: 'Great for nuanced writing feedback.'
+            },
+            ollama: {
+                name: 'Ollama (Local)',
+                description: 'Run models locally. Download from ollama.ai',
+                note: 'Free! Run: ollama run mistral. No API key needed.'
+            }
+        };
+
+        // Initialize
+        window.addEventListener('load', () => {
+            loadSettings();
+            updateProviderInfo();
+            document.getElementById('editor').addEventListener('input', debounce(() => {
+                if (document.getElementById('realtime').checked) {
+                    analyzeText();
+                }
+            }, 2000));
+        });
+
+        function debounce(fn, ms) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fn.apply(this, args), ms);
+            };
+        }
+
+        function updateProviderInfo() {
+            const provider = document.getElementById('provider').value;
+            const info = PROVIDER_INFO[provider];
+            document.getElementById('provider-info').innerHTML = `
+                <strong>${info.name}</strong><br>
+                ${info.description}<br><br>
+                💡 ${info.note}
+            `;
+        }
+
+        function saveSettings() {
+            const settings = {
+                provider: document.getElementById('provider').value,
+                apiKey: document.getElementById('apiKey').value
+            };
+            localStorage.setItem('writingAssistantSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('writingAssistantSettings') || '{}');
+            if (settings.provider) document.getElementById('provider').value = settings.provider;
+            if (settings.apiKey) document.getElementById('apiKey').value = settings.apiKey;
+        }
+
+        async function testConnection() {
+            const provider = document.getElementById('provider').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const statusDiv = document.getElementById('connection-status');
+
+            statusDiv.innerHTML = '<div class="status-badge">Testing...</div>';
+
+            try {
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ provider, api_key: apiKey })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="status-badge connected">✓ Connected</div>';
+                    saveSettings();
+                } else {
+                    statusDiv.innerHTML = '<div class="status-badge error">✗ Failed - Check your API key</div>';
+                }
+            } catch (e) {
+                statusDiv.innerHTML = '<div class="status-badge error">✗ Connection error</div>';
+            }
+        }
+
+        async function analyzeText() {
+            const text = document.getElementById('editor').value;
+            if (!text.trim()) return;
+
+            const panel = document.getElementById('panel');
+            panel.textContent = 'Analyzing...';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+                displayResults(result);
+            } catch (e) {
+                panel.textContent = 'Error analyzing text';
+            }
+        }
+
+        function displayResults(data) {
+            const panel = document.getElementById('panel');
+            panel.innerHTML = '';
+
+            // Scores
+            const scoresDiv = document.createElement('div');
+            scoresDiv.innerHTML = '<div class="panel-title">📊 Analysis</div>';
+            ['overall', 'clarity', 'style'].forEach(key => {
+                const div = document.createElement('div');
+                div.className = 'score-item';
+                div.innerHTML = `<span class="score-label">${key.charAt(0).toUpperCase() + key.slice(1)}</span><span class="score-value">${data.scores[key]}/10</span>`;
+                scoresDiv.appendChild(div);
+            });
+            panel.appendChild(scoresDiv);
+
+            // Stats
+            const statsDiv = document.createElement('div');
+            statsDiv.innerHTML = '<div class="divider"></div><div class="panel-title">📈 Stats</div>';
+            const stats = [
+                ['Words', data.stats.words],
+                ['Sentences', data.stats.sentences],
+                ['Avg Word Length', data.stats.avg_word_length],
+                ['Readability', data.stats.readability + '/10']
+            ];
+            stats.forEach(([label, value]) => {
+                const div = document.createElement('div');
+                div.className = 'stat-line';
+                div.innerHTML = `<strong>${label}:</strong> ${value}`;
+                statsDiv.appendChild(div);
+            });
+            panel.appendChild(statsDiv);
+
+            // Issues
+            if (data.issues.length > 0) {
+                const issuesDiv = document.createElement('div');
+                issuesDiv.innerHTML = `<div class="divider"></div><div class="panel-title">⚠️ Suggestions (${data.issues.length})</div>`;
+                data.issues.forEach(issue => {
+                    const card = document.createElement('div');
+                    card.className = 'issue-card';
+                    card.innerHTML = `
+                        <div class="issue-category">${issue.category}</div>
+                        <div class="issue-text">${issue.issue}</div>
+                    `;
+                    issuesDiv.appendChild(card);
+                });
+                panel.appendChild(issuesDiv);
+            }
+        }
+
+        // Auto-save
+        document.getElementById('editor').addEventListener('input', e => {
+            localStorage.setItem('editorContent', e.target.value);
+        });
+
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('editorContent');
+            if (saved) document.getElementById('editor').value = saved;
+        });
+    </script>
+</body>
+</html>
